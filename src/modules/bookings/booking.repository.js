@@ -34,17 +34,17 @@ const createBooking = async ({ parent_id, offering_id }, client) => {
 
 const findParentBookings = async (parentId) => {
   const query = `
-    SELECT b.*, 
-           o.title as offering_title, 
-           o.description as offering_description,
-           u.name as teacher_name,
-           COALESCE(json_agg(s.* ORDER BY s.start_time ASC) FILTER (WHERE s.id IS NOT NULL), '[]') as sessions
+    SELECT b.id, b.status, b.created_at,
+           json_build_object(
+             'id', o.id,
+             'title', o.title,
+             'sessions', COALESCE(json_agg(s.* ORDER BY s.start_time ASC) FILTER (WHERE s.id IS NOT NULL), '[]')
+           ) as offering
     FROM bookings b
     JOIN offerings o ON b.offering_id = o.id
-    JOIN users u ON o.teacher_id = u.id
     LEFT JOIN sessions s ON o.id = s.offering_id
     WHERE b.parent_id = $1
-    GROUP BY b.id, o.id, u.name
+    GROUP BY b.id, o.id
     ORDER BY b.created_at DESC
   `;
   const { rows } = await db.query(query, [parentId]);

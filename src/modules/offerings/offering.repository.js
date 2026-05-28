@@ -41,7 +41,8 @@ const findAllWithSessions = async (includeAll = false) => {
   const sessionFilter = includeAll ? '' : 'AND s.start_time > NOW()';
 
   const query = `
-    SELECT o.*, u.name as teacher_name,
+    SELECT o.*, 
+           json_build_object('id', u.id, 'name', u.name) as teacher,
            COALESCE(
              json_agg(s.* ORDER BY s.start_time ASC) FILTER (WHERE s.id IS NOT NULL ${sessionFilter}), 
              '[]'
@@ -49,7 +50,7 @@ const findAllWithSessions = async (includeAll = false) => {
     FROM offerings o
     JOIN users u ON o.teacher_id = u.id
     LEFT JOIN sessions s ON o.id = s.offering_id
-    GROUP BY o.id, u.name
+    GROUP BY o.id, u.id, u.name
     ORDER BY o.created_at DESC
   `;
   const { rows } = await db.query(query);

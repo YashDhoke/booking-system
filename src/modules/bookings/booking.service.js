@@ -79,7 +79,10 @@ const getParentBookings = async (parentId, userTimezone) => {
   // Format sessions for each booking according to parent's timezone
   return bookings.map(booking => ({
     ...booking,
-    sessions: booking.sessions.map(session => formatSessionForUser(session, userTimezone))
+    offering: {
+      ...booking.offering,
+      sessions: booking.offering.sessions.map(session => formatSessionForUser(session, userTimezone))
+    }
   }));
 };
 

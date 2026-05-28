@@ -41,10 +41,13 @@ const isValidTimezone = (timezone) => {
  */
 const formatSessionForUser = (session, userTimezone) => {
   return {
-    ...session,
+    id: session.id,
+    offering_id: session.offering_id,
     start_time: convertFromUTC(session.start_time, userTimezone),
     end_time: convertFromUTC(session.end_time, userTimezone),
-    timezone_label: userTimezone
+    timezone: userTimezone,
+    start_time_utc: session.start_time,
+    end_time_utc: session.end_time
   };
 };
 
