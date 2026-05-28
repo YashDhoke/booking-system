@@ -43,8 +43,11 @@ const getAllOfferings = async (userTimezone, filter = 'upcoming') => {
   const includeAll = filter === 'all';
   const offerings = await offeringRepository.findAllWithSessions(includeAll);
   
+  // Filter out offerings with no sessions
+  const validOfferings = offerings.filter(o => o.sessions && o.sessions.length > 0);
+
   // Convert session times to user's timezone
-  return offerings.map(offering => ({
+  return validOfferings.map(offering => ({
     ...offering,
     sessions: offering.sessions.map(session => formatSessionForUser(session, userTimezone))
   }));

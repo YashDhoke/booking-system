@@ -6,6 +6,7 @@ const getParentBookedSessions = async (parentId, client) => {
     FROM sessions s
     INNER JOIN bookings b ON b.offering_id = s.offering_id
     WHERE b.parent_id = $1 AND b.status = 'confirmed'
+    ORDER BY s.start_time ASC
     FOR UPDATE
   `;
   const executor = client || db;
@@ -14,7 +15,7 @@ const getParentBookedSessions = async (parentId, client) => {
 };
 
 const getOfferingSessions = async (offeringId, client) => {
-  const query = 'SELECT * FROM sessions WHERE offering_id = $1';
+  const query = 'SELECT * FROM sessions WHERE offering_id = $1 ORDER BY start_time ASC';
   const executor = client || db;
   const { rows } = await executor.query(query, [offeringId]);
   return rows;
@@ -37,7 +38,7 @@ const findParentBookings = async (parentId) => {
            o.title as offering_title, 
            o.description as offering_description,
            u.name as teacher_name,
-           COALESCE(json_agg(s.*) FILTER (WHERE s.id IS NOT NULL), '[]') as sessions
+           COALESCE(json_agg(s.* ORDER BY s.start_time ASC) FILTER (WHERE s.id IS NOT NULL), '[]') as sessions
     FROM bookings b
     JOIN offerings o ON b.offering_id = o.id
     JOIN users u ON o.teacher_id = u.id

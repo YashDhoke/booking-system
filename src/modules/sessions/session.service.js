@@ -25,21 +25,41 @@ const addSessions = async (offeringId, sessionsData, teacher) => {
   }
 
   // 3. Convert times to UTC and validate
-  const sessionsToCreate = validatedSessions.map(session => {
+  const sessionsToCreate = [];
+  
+  for (const session of validatedSessions) {
     const startUTC = convertToUTC(session.start_time, teacher.timezone);
     const endUTC = convertToUTC(session.end_time, teacher.timezone);
 
-    if (new Date(endUTC) <= new Date(startUTC)) {
+    const startTime = new Date(startUTC).getTime();
+    const endTime = new Date(endUTC).getTime();
+
+    // Check if in the past
+    if (startTime < Date.now()) {
+      throw new AppError(`Cannot add sessions in the past: ${session.start_time}`, 400);
+    }
+
+    if (endTime <= startTime) {
       throw new AppError(`Invalid time range: End time must be after start time for session starting at ${session.start_time}`, 400);
     }
 
-    return {
+    // Check for internal overlaps in the same request
+    for (const existing of sessionsToCreate) {
+      const eStart = new Date(existing.start_time).getTime();
+      const eEnd = new Date(existing.end_time).getTime();
+
+      if (startTime < eEnd && endTime > eStart) {
+        throw new AppError(`Sessions within the same request cannot overlap each other: ${session.start_time} conflicts with another session in this request.`, 400);
+      }
+    }
+
+    sessionsToCreate.push({
       offering_id: offeringId,
       teacher_id: teacher.id,
       start_time: startUTC,
       end_time: endUTC
-    };
-  });
+    });
+  }
 
   // 4. Bulk Create
   return await sessionRepository.bulkCreate(sessionsToCreate);

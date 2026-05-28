@@ -23,6 +23,12 @@ const bookOffering = async (offeringId, parentId) => {
       throw new AppError('You have already booked this offering', 409);
     }
 
+    // Step 1.1: Verify offering exists and has sessions
+    const offering = await query('SELECT * FROM offerings WHERE id = $1', [offeringId]);
+    if (offering.rows.length === 0) {
+      throw new AppError('Offering not found', 404);
+    }
+
     // Step 2: Lock parent's existing bookings (prevents concurrent conflict)
     const existingSessions = await bookingRepository.getParentBookedSessions(parentId, client);
 
@@ -30,7 +36,7 @@ const bookOffering = async (offeringId, parentId) => {
     const newSessions = await bookingRepository.getOfferingSessions(offeringId, client);
 
     if (newSessions.length === 0) {
-      throw new AppError('Offering not found or has no sessions available', 404);
+      throw new AppError('This offering has no sessions scheduled yet and cannot be booked', 422);
     }
 
     // Step 4: Conflict detection logic

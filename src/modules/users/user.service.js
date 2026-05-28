@@ -19,27 +19,36 @@ const loginSchema = z.object({
   password: z.string().min(1, 'Password is required'),
 });
 
-const register = async (userData) => {
-  // 1. Validate input
-  const validatedData = registerSchema.parse(userData);
+const register = async ({ name, email, password, role, timezone }) => {
+  // 1. Validate Input
+  const validated = registerSchema.parse({ name, email, password, role, timezone });
+  
+  if (!isValidTimezone(validated.timezone)) {
+    throw new AppError('Invalid timezone', 400);
+  }
 
-  // 2. Check if email exists
-  const existingUser = await userRepository.findByEmail(validatedData.email);
+  const normalizedEmail = validated.email.toLowerCase();
+
+  // 2. Check email uniqueness
+  const existingUser = await userRepository.findByEmail(normalizedEmail);
   if (existingUser) {
-    throw new AppError('Email already in use', 409);
+    throw new AppError('Email already registered', 409);
   }
 
   // 3. Hash password
   const salt = await bcrypt.genSalt(10);
-  const hashedPassword = await bcrypt.hash(validatedData.password, salt);
+  const hashedPassword = await bcrypt.hash(validated.password, salt);
 
   // 4. Create user
-  const newUser = await userRepository.createUser({
-    ...validatedData,
+  const user = await userRepository.createUser({
+    name: validated.name,
+    email: normalizedEmail,
     password: hashedPassword,
+    role: validated.role,
+    timezone: validated.timezone,
   });
 
-  return newUser;
+  return user;
 };
 
 const login = async (loginData) => {
@@ -47,7 +56,7 @@ const login = async (loginData) => {
   const validatedData = loginSchema.parse(loginData);
 
   // 2. Find user
-  const user = await userRepository.findByEmail(validatedData.email);
+  const user = await userRepository.findByEmail(validatedData.email.toLowerCase());
   if (!user) {
     throw new AppError('Invalid email or password', 401);
   }
