@@ -10,5 +10,6 @@ router.use(requireRole('parent'));
 
 router.post('/', bookingController.bookOffering);
 router.get('/mine', bookingController.getMyBookings);
+router.patch('/:bookingId/cancel', bookingController.cancelBooking);
 
 module.exports = router;

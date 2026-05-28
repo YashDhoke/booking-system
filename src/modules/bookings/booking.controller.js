@@ -20,7 +20,18 @@ const getMyBookings = async (req, res, next) => {
   }
 };
 
+const cancelBooking = async (req, res, next) => {
+  try {
+    const { bookingId } = req.params;
+    const booking = await bookingService.cancelBooking(bookingId, req.user.id);
+    sendSuccess(res, booking, 'Booking cancelled successfully');
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   bookOffering,
   getMyBookings,
+  cancelBooking,
 };

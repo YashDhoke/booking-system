@@ -19,7 +19,7 @@ const bookOffering = async (offeringId, parentId) => {
 
     // Step 1: Check if parent already booked this offering (Read inside transaction)
     const existingBooking = await bookingRepository.findBookingByParentAndOffering(parentId, offeringId);
-    if (existingBooking) {
+    if (existingBooking && existingBooking.status === 'confirmed') {
       throw new AppError('You have already booked this offering', 409);
     }
 
@@ -77,7 +77,22 @@ const getParentBookings = async (parentId, userTimezone) => {
   }));
 };
 
+const cancelBooking = async (bookingId, parentId) => {
+  const booking = await bookingRepository.findById(bookingId);
+
+  if (!booking || booking.parent_id !== parentId) {
+    throw new AppError('Booking not found', 404);
+  }
+
+  if (booking.status === 'cancelled') {
+    throw new AppError('Booking is already cancelled', 409);
+  }
+
+  return await bookingRepository.cancelBooking(bookingId, parentId);
+};
+
 module.exports = {
   bookOffering,
   getParentBookings,
+  cancelBooking,
 };

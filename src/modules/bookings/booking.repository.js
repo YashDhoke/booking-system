@@ -56,10 +56,29 @@ const findBookingByParentAndOffering = async (parentId, offeringId) => {
   return rows[0];
 };
 
+const findById = async (id) => {
+  const query = 'SELECT * FROM bookings WHERE id = $1';
+  const { rows } = await db.query(query, [id]);
+  return rows[0];
+};
+
+const cancelBooking = async (bookingId, parentId) => {
+  const query = `
+    UPDATE bookings 
+    SET status = 'cancelled', updated_at = NOW()
+    WHERE id = $1 AND parent_id = $2 AND status = 'confirmed'
+    RETURNING *
+  `;
+  const { rows } = await db.query(query, [bookingId, parentId]);
+  return rows[0];
+};
+
 module.exports = {
   getParentBookedSessions,
   getOfferingSessions,
   createBooking,
   findParentBookings,
   findBookingByParentAndOffering,
+  findById,
+  cancelBooking,
 };
