@@ -12,7 +12,8 @@ const createOffering = async (req, res, next) => {
 
 const getMyOfferings = async (req, res, next) => {
   try {
-    const offerings = await offeringService.getTeacherOfferings(req.user.id);
+    const { filter } = req.query;
+    const offerings = await offeringService.getTeacherOfferings(req.user.id, filter);
     sendSuccess(res, offerings, 'Offerings retrieved successfully');
   } catch (error) {
     next(error);
@@ -21,8 +22,9 @@ const getMyOfferings = async (req, res, next) => {
 
 const getAllOfferings = async (req, res, next) => {
   try {
+    const { filter } = req.query;
     // req.user contains the parent's timezone from their JWT
-    const offerings = await offeringService.getAllOfferings(req.user.timezone);
+    const offerings = await offeringService.getAllOfferings(req.user.timezone, filter);
     sendSuccess(res, offerings, 'All offerings retrieved successfully');
   } catch (error) {
     next(error);

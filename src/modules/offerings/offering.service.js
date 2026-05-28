@@ -28,12 +28,20 @@ const createOffering = async (offeringData, teacherId) => {
   });
 };
 
-const getTeacherOfferings = async (teacherId) => {
-  return await offeringRepository.findByTeacherId(teacherId);
+const getTeacherOfferings = async (teacherId, filter = 'upcoming') => {
+  const includeAll = filter === 'all';
+  const offerings = await offeringRepository.findByTeacherId(teacherId, includeAll);
+  
+  return offerings.map(offering => ({
+    ...offering,
+    // Add custom label as requested
+    session_stats: `${offering.upcoming_sessions_count} upcoming / ${offering.total_sessions_count} total`
+  }));
 };
 
-const getAllOfferings = async (userTimezone) => {
-  const offerings = await offeringRepository.findAllWithSessions();
+const getAllOfferings = async (userTimezone, filter = 'upcoming') => {
+  const includeAll = filter === 'all';
+  const offerings = await offeringRepository.findAllWithSessions(includeAll);
   
   // Convert session times to user's timezone
   return offerings.map(offering => ({

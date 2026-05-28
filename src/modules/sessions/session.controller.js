@@ -14,10 +14,11 @@ const addSessions = async (req, res, next) => {
 const getSessions = async (req, res, next) => {
   try {
     const { offeringId } = req.params;
+    const { filter } = req.query;
     // We always use req.user.timezone from the JWT
     // If teacher: it shows in their timezone
     // If parent: it shows in their timezone
-    const sessions = await sessionService.getOfferingSessions(offeringId, req.user.timezone);
+    const sessions = await sessionService.getOfferingSessions(offeringId, req.user.timezone, filter);
     sendSuccess(res, sessions, 'Sessions retrieved successfully');
   } catch (error) {
     next(error);

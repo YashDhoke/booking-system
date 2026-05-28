@@ -10,10 +10,17 @@ const create = async ({ course_id, teacher_id, title, description }) => {
   return rows[0];
 };
 
-const findByTeacherId = async (teacher_id) => {
+const findByTeacherId = async (teacher_id, includeAll = false) => {
+  const sessionFilter = includeAll ? '' : 'AND s.start_time > NOW()';
+  
   const query = `
     SELECT o.*, 
-           COALESCE(json_agg(s.*) FILTER (WHERE s.id IS NOT NULL), '[]') as sessions
+           COALESCE(
+             json_agg(s.* ORDER BY s.start_time ASC) FILTER (WHERE s.id IS NOT NULL ${sessionFilter}), 
+             '[]'
+           ) as sessions,
+           COUNT(s.id) as total_sessions_count,
+           COUNT(s.id) FILTER (WHERE s.start_time > NOW()) as upcoming_sessions_count
     FROM offerings o
     LEFT JOIN sessions s ON o.id = s.offering_id
     WHERE o.teacher_id = $1
@@ -30,10 +37,15 @@ const findById = async (id) => {
   return rows[0];
 };
 
-const findAllWithSessions = async () => {
+const findAllWithSessions = async (includeAll = false) => {
+  const sessionFilter = includeAll ? '' : 'AND s.start_time > NOW()';
+
   const query = `
     SELECT o.*, u.name as teacher_name,
-           COALESCE(json_agg(s.*) FILTER (WHERE s.id IS NOT NULL), '[]') as sessions
+           COALESCE(
+             json_agg(s.* ORDER BY s.start_time ASC) FILTER (WHERE s.id IS NOT NULL ${sessionFilter}), 
+             '[]'
+           ) as sessions
     FROM offerings o
     JOIN users u ON o.teacher_id = u.id
     LEFT JOIN sessions s ON o.id = s.offering_id

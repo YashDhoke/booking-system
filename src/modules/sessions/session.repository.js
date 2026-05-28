@@ -10,8 +10,13 @@ const create = async ({ offering_id, teacher_id, start_time, end_time }) => {
   return rows[0];
 };
 
-const findByOfferingId = async (offering_id) => {
-  const query = 'SELECT * FROM sessions WHERE offering_id = $1 ORDER BY start_time ASC';
+const findByOfferingId = async (offering_id, includeAll = false) => {
+  const filter = includeAll ? '' : 'AND start_time > NOW()';
+  const query = `
+    SELECT * FROM sessions 
+    WHERE offering_id = $1 ${filter}
+    ORDER BY start_time ASC
+  `;
   const { rows } = await db.query(query, [offering_id]);
   return rows;
 };

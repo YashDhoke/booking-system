@@ -45,8 +45,9 @@ const addSessions = async (offeringId, sessionsData, teacher) => {
   return await sessionRepository.bulkCreate(sessionsToCreate);
 };
 
-const getOfferingSessions = async (offeringId, userTimezone) => {
-  const sessions = await sessionRepository.findByOfferingId(offeringId);
+const getOfferingSessions = async (offeringId, userTimezone, filter = 'upcoming') => {
+  const includeAll = filter === 'all';
+  const sessions = await sessionRepository.findByOfferingId(offeringId, includeAll);
   return sessions.map(session => formatSessionForUser(session, userTimezone));
 };
 
