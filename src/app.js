@@ -45,7 +45,7 @@ app.use('/api/offerings/:offeringId/sessions', sessionRoutes);
 app.use('/api/bookings', bookingRoutes);
 
 // 404 Handler
-app.all('*', (req, res, next) => {
+app.use((req, res, next) => {
   next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));
 });
 
