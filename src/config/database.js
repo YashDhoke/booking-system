@@ -1,5 +1,6 @@
 const { Pool } = require('pg');
 require('dotenv').config();
+const logger = require('../utils/logger');
 
 const pool = new Pool({
   host: process.env.DB_HOST,
@@ -12,9 +13,9 @@ const pool = new Pool({
 // Verify connection on startup
 pool.connect((err, client, release) => {
   if (err) {
-    console.error('Database connection error:', err.stack);
+    logger.error('Database connection error:', err.stack);
   } else {
-    console.log('Database connected successfully');
+    logger.info('Database connected successfully');
     release();
   }
 });

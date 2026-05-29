@@ -1,11 +1,44 @@
 const AppError = require('../utils/AppError');
+const logger = require('../utils/logger');
+
+const sendErrorDev = (err, res) => {
+  res.status(err.statusCode || 500).json({
+    success: false,
+    status: err.status,
+    error: err,
+    message: err.message,
+    stack: err.stack,
+  });
+};
+
+const sendErrorProd = (err, res) => {
+  // Operational, trusted error: send message to client
+  if (err.isOperational) {
+    res.status(err.statusCode).json({
+      success: false,
+      message: err.message,
+      errors: err.errors || [],
+    });
+  } 
+  // Programming or other unknown error: don't leak error details
+  else {
+    logger.error('ERROR 💥', err);
+    res.status(500).json({
+      success: false,
+      message: 'Something went very wrong!',
+    });
+  }
+};
 
 const errorHandler = (err, req, res, next) => {
+  err.statusCode = err.statusCode || 500;
+  err.status = err.status || 'error';
+
+  // Log error using Winston
+  logger.error(`[${req.method}] ${req.originalUrl} - ${err.message}`);
+
   let error = { ...err };
   error.message = err.message;
-
-  // Log for development
-  console.error(`[${new Date().toISOString()}] Error:`, err);
 
   // 1. Zod Validation Error (if using Zod)
   if (err.name === 'ZodError') {
@@ -14,39 +47,25 @@ const errorHandler = (err, req, res, next) => {
       field: e.path.join('.'),
       message: e.message
     }));
-    return res.status(400).json({ success: false, message, errors });
+    error = new AppError(message, 400, errors);
   }
 
   // 2. PostgreSQL Unique Violation
   if (err.code === '23505') {
-    return res.status(409).json({
-      success: false,
-      message: 'Resource already exists'
-    });
+    error = new AppError('Resource already exists', 409);
   }
 
   // 3. PostgreSQL Foreign Key Violation
   if (err.code === '23503') {
-    return res.status(404).json({
-      success: false,
-      message: 'Related resource not found'
-    });
+    error = new AppError('Related resource not found', 404);
   }
 
-  // 4. Custom AppError (Operational)
-  if (err.isOperational) {
-    return res.status(err.statusCode).json({
-      success: false,
-      message: err.message,
-      errors: err.errors || []
-    });
+  if (process.env.NODE_ENV === 'development') {
+    sendErrorDev(error, res);
+  } else {
+    sendErrorProd(error, res);
   }
-
-  // 5. Default Internal Server Error
-  return res.status(500).json({
-    success: false,
-    message: process.env.NODE_ENV === 'development' ? err.message : 'Internal server error'
-  });
 };
 
 module.exports = errorHandler;
+

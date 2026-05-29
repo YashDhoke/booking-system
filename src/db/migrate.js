@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const { pool } = require('../config/database');
+const logger = require('../utils/logger');
 
 async function runMigrations() {
   const migrationsDir = path.join(__dirname, 'migrations');
@@ -10,28 +11,29 @@ async function runMigrations() {
     .filter(file => file.endsWith('.sql'))
     .sort();
 
-  console.log(`Found ${files.length} migration files.`);
+  logger.info(`Found ${files.length} migration files.`);
 
   for (const file of files) {
     const filePath = path.join(migrationsDir, file);
     const sql = fs.readFileSync(filePath, 'utf8');
 
-    console.log(`Running migration: ${file}...`);
+    logger.info(`Running migration: ${file}...`);
     
     try {
       await pool.query(sql);
-      console.log(`Successfully completed: ${file}`);
+      logger.info(`Successfully completed: ${file}`);
     } catch (err) {
-      console.error(`Error running migration ${file}:`, err.message);
+      logger.error(`Error running migration ${file}: ${err.message}`);
       process.exit(1);
     }
   }
 
-  console.log('All migrations executed successfully.');
+  logger.info('All migrations executed successfully.');
   process.exit(0);
 }
 
 runMigrations().catch(err => {
-  console.error('Migration runner failed:', err);
+  logger.error('Migration runner failed:', err);
   process.exit(1);
 });
+
