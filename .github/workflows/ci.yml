@@ -1,0 +1,84 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches:
+      - main
+      - 'feature/**'
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_DB: booking_system_test
+          POSTGRES_USER: booking_user
+          POSTGRES_PASSWORD: booking_pass
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 18
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Create .env file
+        run: |
+          echo "PORT=3000" >> .env
+          echo "DB_HOST=localhost" >> .env
+          echo "DB_PORT=5432" >> .env
+          echo "DB_NAME=booking_system_test" >> .env
+          echo "DB_USER=booking_user" >> .env
+          echo "DB_PASSWORD=booking_pass" >> .env
+          echo "JWT_SECRET=test_jwt_secret_for_ci" >> .env
+          echo "JWT_EXPIRES_IN=7d" >> .env
+
+      - name: Run migrations
+        run: node src/db/migrate.js
+
+      - name: Run tests
+        run: npm test -- --coverage --ci
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage/
+
+  lint:
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 18
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Syntax check
+        run: node --check src/app.js
