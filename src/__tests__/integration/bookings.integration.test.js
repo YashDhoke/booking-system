@@ -10,7 +10,7 @@ process.env.NODE_ENV = 'test';
 
 const request = require('supertest');
 const app = require('../../app');
-const { TEACHER_TOKEN, PARENT_TOKEN, TEACHER, PARENT } = require('./helpers/testHelpers');
+const { TEACHER_TOKEN, PARENT_TOKEN, TEACHER, PARENT } = require('../../test-utils/testHelpers');
 
 jest.mock('../../utils/logger', () => ({
   error: jest.fn(),

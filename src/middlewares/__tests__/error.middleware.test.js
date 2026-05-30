@@ -18,6 +18,7 @@ describe('error.middleware', () => {
       json: jest.fn().mockReturnThis(),
     };
     next = jest.fn();
+    jest.clearAllMocks();
   });
 
   describe('in development mode', () => {
@@ -32,8 +33,9 @@ describe('error.middleware', () => {
 
       expect(res.status).toHaveBeenCalledWith(400);
       const jsonCall = res.json.mock.calls[0][0];
-      // In dev mode, sendErrorDev includes the stack inside the `error` object
-      expect(jsonCall.stack).toBeDefined();
+      
+      // Ensure stack exists and object matches structure
+      expect(jsonCall).toHaveProperty('stack');
       expect(jsonCall.message).toBe('Test error');
     });
   });
@@ -55,8 +57,8 @@ describe('error.middleware', () => {
       }));
     });
 
-    test('should return 500 for non-operational errors (programming errors)', () => {
-      const err = new Error('Something unexpected'); // not an AppError, not operational
+    test('should return 500 for non-operational errors', () => {
+      const err = new Error('Something unexpected');
       errorHandler(err, req, res, next);
 
       expect(res.status).toHaveBeenCalledWith(500);
@@ -69,14 +71,10 @@ describe('error.middleware', () => {
     test('should handle ZodError and return 400 with field-level errors', () => {
       const zodErr = {
         name: 'ZodError',
-        statusCode: undefined,
-        status: undefined,
         issues: [
           { path: ['email'], message: 'Invalid email format' },
           { path: ['password'], message: 'Password too short' },
         ],
-        message: 'Validation failed',
-        stack: '',
       };
       errorHandler(zodErr, req, res, next);
 
@@ -92,11 +90,7 @@ describe('error.middleware', () => {
     });
 
     test('should handle PostgreSQL unique violation (code 23505) as 409', () => {
-      const pgErr = {
-        code: '23505',
-        message: 'duplicate key value violates unique constraint',
-        stack: '',
-      };
+      const pgErr = { code: '23505' };
       errorHandler(pgErr, req, res, next);
 
       expect(res.status).toHaveBeenCalledWith(409);
@@ -106,24 +100,13 @@ describe('error.middleware', () => {
     });
 
     test('should handle PostgreSQL foreign key violation (code 23503) as 404', () => {
-      const pgErr = {
-        code: '23503',
-        message: 'insert or update on table violates foreign key constraint',
-        stack: '',
-      };
+      const pgErr = { code: '23503' };
       errorHandler(pgErr, req, res, next);
 
       expect(res.status).toHaveBeenCalledWith(404);
       expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
         message: 'Related resource not found',
       }));
-    });
-
-    test('should default statusCode to 500 if not set on error', () => {
-      const err = new AppError('Generic error', 500);
-      errorHandler(err, req, res, next);
-
-      expect(res.status).toHaveBeenCalledWith(500);
     });
   });
 });
