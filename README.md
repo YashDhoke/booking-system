@@ -146,6 +146,36 @@ Import the `postman_collection.json` file from the root directory into Postman t
 
 ---
 
+## ⚙️ Environment Variables
+
+Create a `.env` file in the root directory with the following variables:
+
+| Variable | Description | Example |
+| :--- | :--- | :--- |
+| `PORT` | Server port | `3000` |
+| `DB_HOST` | PostgreSQL host | `localhost` |
+| `DB_PORT` | PostgreSQL port | `5432` |
+| `DB_NAME` | Database name | `booking_system` |
+| `DB_USER` | Database user | `booking_user` |
+| `DB_PASSWORD` | Database password | `booking_pass` |
+| `JWT_SECRET` | Secret key for JWT signing | `supersecretjwtkey123` |
+| `JWT_EXPIRES_IN` | JWT expiry duration | `7d` |
+| `NODE_ENV` | Environment | `development` |
+
+
+## 📝 Assumptions Made
+
+- A Teacher must create a Course before creating an Offering.
+- Sessions are submitted in the Teacher's local timezone (from their profile) and stored in UTC.
+- Parents book at the Offering level — all sessions in a batch are booked together atomically.
+- A Parent cannot book two offerings whose sessions overlap in time, even partially.
+- Cancelling a booking immediately frees up those time slots for future bookings.
+- Each user has a single fixed IANA timezone stored in their profile at registration.
+- Sessions in the past are hidden from dashboards by default (filter=upcoming).
+- A Parent cannot book the same offering twice simultaneously.
+- Teachers can only manage their own courses and offerings, not other teachers'.
+- No seat/capacity limit per offering — focus is on per-parent schedule conflicts only.
+
 ## 🐋 Running with Docker
 
 The project includes full Docker support for a zero-configuration setup.
