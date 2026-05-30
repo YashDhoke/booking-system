@@ -190,3 +190,10 @@ The API is live and publicly accessible on Railway:
 
 > No local setup required to test the API — use the Postman collection 
 > with the live base URL above.
+
+## 🎥 Demo Recording
+
+Watch the full system demo including timezone handling, 
+conflict detection, and concurrency testing:
+
+**Demo Video**: https://www.loom.com/share/be9e00631c9d4158a494af6cf3177f51
