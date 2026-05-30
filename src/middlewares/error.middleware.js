@@ -40,11 +40,12 @@ const errorHandler = (err, req, res, next) => {
   let error = { ...err };
   error.message = err.message;
 
-  // 1. Zod Validation Error (if using Zod)
+  // 1. Zod Validation Error
   if (err.name === 'ZodError') {
     const message = 'Validation failed';
-    const errors = err.errors.map(e => ({
-      field: e.path.join('.'),
+    const issues = Array.isArray(err.issues) ? err.issues : (Array.isArray(err.errors) ? err.errors : []);
+    const errors = issues.map(e => ({
+      field: Array.isArray(e.path) ? e.path.join('.') : e.path,
       message: e.message
     }));
     error = new AppError(message, 400, errors);
