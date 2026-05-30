@@ -175,3 +175,18 @@ docker-compose up --build
   ```bash
   docker-compose logs -f app
   ```
+
+
+## 🌐 Live Deployment
+
+The API is live and publicly accessible on Railway:
+
+**Base URL**: `https://booking-system-production-e113.up.railway.app`
+
+| Endpoint | URL |
+| :--- | :--- |
+| Health Check | https://booking-system-production-e113.up.railway.app/api/health |
+| API Base | https://booking-system-production-e113.up.railway.app/api |
+
+> No local setup required to test the API — use the Postman collection 
+> with the live base URL above.
